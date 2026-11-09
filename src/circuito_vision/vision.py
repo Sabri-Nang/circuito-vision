@@ -1,4 +1,9 @@
-"""Analizador visual base y heurísticas del MVP."""
+"""Analizador visual base del MVP.
+
+Este módulo no carga modelos entrenados: aplica reglas deterministas de brillo
+y saturación sobre los píxeles de la imagen. La clase está aislada para poder
+reemplazarla luego por un adaptador de YOLO, MediaPipe o un modelo multimodal.
+"""
 
 import numpy as np
 from PIL import Image
