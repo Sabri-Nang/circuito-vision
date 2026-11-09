@@ -30,7 +30,9 @@ La aplicación utiliza ahora un **pipeline híbrido**:
 El adaptador de YOLO está en [yolo_detector.py](src/circuito_vision/yolo_detector.py)
 y carga por defecto `yolo26n.pt`, un modelo oficial pequeño de Ultralytics. El
 archivo de pesos se descarga automáticamente durante la primera inferencia y
-no se sube al repositorio.
+no se sube al repositorio. La configuración de Ultralytics se guarda en la
+carpeta local `.ultralytics/` para evitar depender de permisos de
+`AppData\\Roaming` en Windows.
 
 Las heurísticas deterministas basadas en NumPy y Pillow hacen lo siguiente:
 
