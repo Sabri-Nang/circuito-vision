@@ -60,6 +60,10 @@ Las etiquetas `arduino`, `controller`, `microcontroller`, `breadboard`,
 `protoboard`, `wire`, `cable` y `jumper` se convierten en componentes del
 dominio. Las demás etiquetas se muestran como detecciones YOLO genéricas.
 
+El esqueleto del dataset y el validador están en
+[datasets/circuito](datasets/circuito/README.md). Allí se documentan las
+clases, el formato de bounding boxes y el comando de entrenamiento.
+
 ### Tecnologías que todavía no están integradas
 
 - **YOLO:** sería apropiado para detectar Arduino, sensores, resistencias,

@@ -1,0 +1,13 @@
+path: .
+train: images/train
+val: images/val
+
+names:
+  0: arduino
+  1: breadboard
+  2: wire
+  3: resistor
+  4: led
+  5: sensor
+  6: button
+  7: power_supply
