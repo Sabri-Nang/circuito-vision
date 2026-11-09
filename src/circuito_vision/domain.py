@@ -1,4 +1,4 @@
-"""Modelos de dominio independientes de Gradio y de la visión por computadora."""
+"""Modelos de dominio independientes de Gradio y de la visión."""
 
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -44,14 +44,15 @@ class CircuitAnalysis:
     @property
     def summary(self) -> str:
         """Devuelve un resumen legible para la interfaz."""
-        if not self.components:
-            return "No se detectaron componentes con suficiente confianza."
-
-        lines = ["Componentes detectados:"]
-        lines.extend(
-            f"- {component.label} ({component.confidence:.0%})"
-            for component in self.components
-        )
+        lines: list[str] = []
+        if self.components:
+            lines.append("Componentes detectados:")
+            lines.extend(
+                f"- {component.label} ({component.confidence:.0%})"
+                for component in self.components
+            )
+        else:
+            lines.append("No se detectaron componentes con suficiente confianza.")
         if self.notes:
             lines.append("\nObservaciones:")
             lines.extend(f"- {note}" for note in self.notes)

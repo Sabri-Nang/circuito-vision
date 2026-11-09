@@ -16,6 +16,13 @@ class FakeYoloDetector:
         return (ObjectDetection("arduino", 0.91, (1.0, 2.0, 10.0, 20.0)),)
 
 
+class EmptyYoloDetector(FakeYoloDetector):
+    """Detector que no encuentra objetos."""
+
+    def detect(self, image: Image.Image) -> tuple[ObjectDetection, ...]:
+        return ()
+
+
 def test_analyzer_returns_warning_for_any_valid_image() -> None:
     image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
 
@@ -41,3 +48,13 @@ def test_analyzer_includes_yolo_component_detection() -> None:
 
     assert result.detections[0].label == "arduino"
     assert any("arduino" in component.label for component in result.components)
+
+
+def test_yolo_without_detections_does_not_invent_components() -> None:
+    image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
+
+    result = CircuitAnalyzer(yolo_detector=EmptyYoloDetector()).analyze(image)
+
+    assert result.detections == ()
+    assert result.components == ()
+    assert "no encontr" in result.summary.lower()

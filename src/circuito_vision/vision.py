@@ -1,9 +1,4 @@
-"""Analizador visual base del MVP.
-
-Este módulo no carga modelos entrenados: aplica reglas deterministas de brillo
-y saturación sobre los píxeles de la imagen. La clase está aislada para poder
-reemplazarla luego por un adaptador de YOLO, MediaPipe o un modelo multimodal.
-"""
+"""Análisis visual del MVP con YOLO y fallback heurístico."""
 
 import numpy as np
 from PIL import Image
@@ -18,13 +13,13 @@ from .yolo_detector import YoloDetector
 
 
 class CircuitAnalyzer:
-    """Detecta señales visuales simples sin afirmar conexiones eléctricas."""
+    """Detecta objetos sin inventar conexiones eléctricas."""
 
     def __init__(self, yolo_detector: YoloDetector | None = None) -> None:
         self.yolo_detector = yolo_detector
 
     def analyze(self, image: Image.Image) -> CircuitAnalysis:
-        """Analiza una imagen RGB y devuelve componentes orientativos."""
+        """Analiza una imagen y conserva las detecciones observables."""
         if image is None:
             raise ValueError("Se necesita una imagen para iniciar el análisis.")
 
@@ -34,50 +29,60 @@ class CircuitAnalyzer:
         notes: list[str] = []
         detections: tuple[ObjectDetection, ...] = ()
 
-        if self._looks_like_breadboard(pixels):
-            components.append(
-                DetectedComponent(ComponentKind.BREADBOARD, "Protoboard", 0.72)
-            )
-        if self._looks_like_controller(pixels):
-            components.append(
-                DetectedComponent(
-                    ComponentKind.CONTROLLER,
-                    "Microcontrolador compatible con Arduino (posible)",
-                    0.58,
-                )
-            )
-        if self._looks_like_wires(pixels):
-            components.append(
-                DetectedComponent(ComponentKind.WIRE, "Cables de conexión", 0.64)
-            )
-
         if self.yolo_detector is not None:
             detections = self.yolo_detector.detect(rgb_image)
-            self._add_component_detections(components, detections)
             if self.yolo_detector.error:
                 notes.append(self.yolo_detector.error)
+                self._add_heuristic_components(components, pixels)
+                notes.append("Se activó el fallback visual por el error de YOLO.")
             elif detections:
+                self._add_component_detections(components, detections)
                 notes.append(
-                    "YOLO detectó objetos genéricos; se requieren pesos propios "
-                    "para reconocer componentes eléctricos con precisión."
+                    "Las cajas representan objetos detectados; todavía no son "
+                    "conexiones eléctricas ni un netlist."
                 )
             else:
                 notes.append("YOLO no encontró objetos sobre el umbral de confianza.")
+        else:
+            self._add_heuristic_components(components, pixels)
+            notes.append("Se utilizó el analizador visual de respaldo.")
 
         if not components:
-            notes.append(
-                "La foto no presenta señales claras para las heurísticas del MVP."
-            )
+            notes.append("No hay componentes identificados para construir un esquema.")
         notes.append("La orientación y el encuadre influyen en la detección.")
         return CircuitAnalysis(
             components=tuple(components),
             detections=detections,
             notes=tuple(notes),
             warning=(
-                "El esquema es orientativo: no reemplaza una revisión eléctrica "
-                "ni garantiza que las conexiones reales sean correctas."
+                "No se infieren flechas ni conexiones: detectar la topología exige "
+                "seguir cables y mapear pines con un modelo entrenado para circuitos."
             ),
         )
+
+    @classmethod
+    def _add_heuristic_components(
+        cls,
+        components: list[DetectedComponent],
+        pixels: np.ndarray,
+    ) -> None:
+        """Agrega señales de respaldo, sin presentarlas como conexiones reales."""
+        if cls._looks_like_breadboard(pixels):
+            components.append(
+                DetectedComponent(ComponentKind.BREADBOARD, "Protoboard posible", 0.45)
+            )
+        if cls._looks_like_controller(pixels):
+            components.append(
+                DetectedComponent(
+                    ComponentKind.CONTROLLER,
+                    "Microcontrolador posible",
+                    0.40,
+                )
+            )
+        if cls._looks_like_wires(pixels):
+            components.append(
+                DetectedComponent(ComponentKind.WIRE, "Cables posibles", 0.42)
+            )
 
     @staticmethod
     def _add_component_detections(
@@ -103,19 +108,19 @@ class CircuitAnalyzer:
 
     @staticmethod
     def _looks_like_breadboard(pixels: np.ndarray) -> bool:
-        """Busca una proporción relevante de zonas claras y alargadas."""
+        """Busca una proporción relevante de zonas claras."""
         bright = np.all(pixels > 175, axis=2)
         return float(bright.mean()) > 0.18
 
     @staticmethod
     def _looks_like_controller(pixels: np.ndarray) -> bool:
-        """Busca superficies oscuras con componentes de alto contraste."""
+        """Busca superficies oscuras con contraste."""
         dark = np.all(pixels < 90, axis=2)
         return float(dark.mean()) > 0.025
 
     @staticmethod
     def _looks_like_wires(pixels: np.ndarray) -> bool:
-        """Busca píxeles saturados que suelen corresponder a jumpers."""
+        """Busca píxeles saturados que pueden corresponder a cables."""
         maximum = pixels.max(axis=2).astype(np.int16)
         minimum = pixels.min(axis=2).astype(np.int16)
         saturated = (maximum - minimum) > 70

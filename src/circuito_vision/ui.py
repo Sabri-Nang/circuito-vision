@@ -17,7 +17,7 @@ def build_app() -> gr.Blocks:
             return None, "Subí una foto de una protoboard o circuito para analizarla."
         try:
             analysis = analyzer.analyze(image)
-            return render_diagram(analysis), analysis.summary
+            return render_diagram(image, analysis), analysis.summary
         except (TypeError, ValueError, OSError) as error:
             return None, f"No se pudo analizar la imagen: {error}"
 
