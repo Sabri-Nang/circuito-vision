@@ -9,6 +9,14 @@ from PIL import Image
 from .domain import ObjectDetection
 
 
+def _configure_ultralytics() -> None:
+    """Configura una carpeta escribible para los ajustes de Ultralytics."""
+    project_root = Path(__file__).resolve().parents[2]
+    config_dir = project_root / ".ultralytics"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("YOLO_CONFIG_DIR", str(config_dir))
+
+
 class YoloDetector:
     """Ejecuta YOLO bajo demanda y tolera instalaciones incompletas.
 
@@ -30,6 +38,7 @@ class YoloDetector:
     @property
     def available(self) -> bool:
         """Indica si el adaptador puede importar Ultralytics."""
+        _configure_ultralytics()
         try:
             from ultralytics import YOLO  # noqa: F401
         except ImportError:
@@ -55,6 +64,7 @@ class YoloDetector:
         if self._model is not None:
             return self._model
 
+        _configure_ultralytics()
         from ultralytics import YOLO
 
         model_path = Path(self.model_path)
