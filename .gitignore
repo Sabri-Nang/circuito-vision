@@ -14,4 +14,10 @@ build/
 *.egg-info/
 *.pt
 .ultralytics/
+datasets/sources/
+datasets/circuito/images/**/*.jpg
+datasets/circuito/images/**/*.jpeg
+datasets/circuito/images/**/*.png
+datasets/circuito/images/**/*.webp
+datasets/circuito/labels/**/*.txt
 .DS_Store

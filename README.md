@@ -64,6 +64,11 @@ El esqueleto del dataset y el validador están en
 [datasets/circuito](datasets/circuito/README.md). Allí se documentan las
 clases, el formato de bounding boxes y el comando de entrenamiento.
 
+La primera fuente PCB ya fue importada localmente con 117 imágenes de train y
+13 de validación. Por tamaño, las imágenes y etiquetas están excluidas de Git;
+el proceso de descarga e importación queda documentado en
+[SOURCES.md](datasets/circuito/SOURCES.md).
+
 ### Tecnologías que todavía no están integradas
 
 - **YOLO:** sería apropiado para detectar Arduino, sensores, resistencias,

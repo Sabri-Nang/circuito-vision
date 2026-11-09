@@ -14,6 +14,13 @@ Dataset YOLO para detectar componentes de circuitos físicos en fotografías.
 | 5 | `sensor` |
 | 6 | `button` |
 | 7 | `power_supply` |
+| 8 | `capacitor` |
+| 9 | `diode` |
+| 10 | `ic` |
+| 11 | `connector` |
+| 12 | `header` |
+| 13 | `crystal` |
+| 14 | `debug_tp` |
 
 ## Estructura
 
@@ -79,5 +86,19 @@ uv run yolo detect train `
   imgsz=640
 ```
 
-El dataset actual es un **esqueleto vacío**: antes de entrenar hay que agregar
-fotos y sus anotaciones.
+La primera importación local contiene 117 imágenes de entrenamiento y 13 de
+validación provenientes del dataset PCB Component Detection. Las imágenes y
+etiquetas se mantienen fuera de Git por su tamaño; se pueden regenerar con el
+importador y la fuente descargada.
+
+Para importar una fuente YOLO descargada localmente:
+
+```powershell
+uv run python scripts/import_yolo_dataset.py `
+  --source datasets/sources/pcb-component-detection-dataset-yolo/dataset
+```
+
+El importador copia las imágenes y remapea las clases externas al esquema de
+Circuito Vision. Las imágenes y etiquetas quedan ignoradas por Git para evitar
+subir datasets grandes; el código y las fuentes se documentan de forma
+reproducible.

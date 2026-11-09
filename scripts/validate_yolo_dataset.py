@@ -3,7 +3,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "datasets" / "circuito"
-CLASS_COUNT = 8
+CLASS_COUNT = 15
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 
 
@@ -58,8 +58,14 @@ def main() -> int:
         print("Dataset inválido:")
         print("\n".join(f"- {error}" for error in errors))
         return 1
+    train_count = len(
+        [path for path in (ROOT / "images" / "train").iterdir() if path.is_file()]
+    )
+    val_count = len(
+        [path for path in (ROOT / "images" / "val").iterdir() if path.is_file()]
+    )
     print(f"Dataset válido: {ROOT}")
-    print("No se encontraron imágenes; agregá fotos y etiquetas antes de entrenar.")
+    print(f"Imágenes detectadas: train={train_count}, val={val_count}")
     return 0
 
 

@@ -11,3 +11,10 @@ names:
   5: sensor
   6: button
   7: power_supply
+  8: capacitor
+  9: diode
+  10: ic
+  11: connector
+  12: header
+  13: crystal
+  14: debug_tp
