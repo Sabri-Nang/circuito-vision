@@ -10,6 +10,7 @@ class ComponentKind(StrEnum):
     CONTROLLER = "controlador"
     BREADBOARD = "protoboard"
     WIRE = "cable"
+    POWER_SUPPLY = "fuente de alimentación"
     UNKNOWN = "elemento no identificado"
 
 

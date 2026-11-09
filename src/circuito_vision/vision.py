@@ -37,12 +37,17 @@ class CircuitAnalyzer:
                 notes.append("Se activó el fallback visual por el error de YOLO.")
             elif detections:
                 self._add_component_detections(components, detections)
+                self._add_heuristic_components(components, pixels)
                 notes.append(
                     "Las cajas representan objetos detectados; todavía no son "
                     "conexiones eléctricas ni un netlist."
                 )
             else:
-                notes.append("YOLO no encontró objetos sobre el umbral de confianza.")
+                self._add_heuristic_components(components, pixels)
+                notes.append(
+                    "YOLO no encontró objetos sobre el umbral; se agregó un "
+                    "inventario visual orientativo."
+                )
         else:
             self._add_heuristic_components(components, pixels)
             notes.append("Se utilizó el analizador visual de respaldo.")
@@ -83,6 +88,10 @@ class CircuitAnalyzer:
             components.append(
                 DetectedComponent(ComponentKind.WIRE, "Cables posibles", 0.42)
             )
+        if cls._looks_like_led(pixels):
+            components.append(
+                DetectedComponent(ComponentKind.UNKNOWN, "LED posible", 0.35)
+            )
 
     @staticmethod
     def _add_component_detections(
@@ -94,12 +103,18 @@ class CircuitAnalyzer:
             label = detection.label.lower()
             if "breadboard" in label or "protoboard" in label:
                 kind = ComponentKind.BREADBOARD
+                display_label = "Protoboard"
             elif any(
                 word in label for word in ("arduino", "controller", "microcontroller")
             ):
                 kind = ComponentKind.CONTROLLER
+                display_label = "Arduino / microcontrolador"
             elif any(word in label for word in ("wire", "cable", "jumper")):
                 kind = ComponentKind.WIRE
+                display_label = "Cables de conexión"
+            elif "power_supply" in label or "power supply" in label:
+                kind = ComponentKind.POWER_SUPPLY
+                display_label = "Fuente de alimentación"
             elif any(
                 word in label
                 for word in (
@@ -117,11 +132,29 @@ class CircuitAnalyzer:
                 )
             ):
                 kind = ComponentKind.UNKNOWN
+                display_label = CircuitAnalyzer._human_component_label(label)
             else:
                 continue
             components.append(
-                DetectedComponent(kind, detection.label, detection.confidence)
+                DetectedComponent(kind, display_label, detection.confidence)
             )
+
+    @staticmethod
+    def _human_component_label(label: str) -> str:
+        """Normaliza etiquetas YOLO para la lista visible del usuario."""
+        names = {
+            "resistor": "Resistencia",
+            "capacitor": "Capacitor",
+            "diode": "Diodo",
+            "led": "LED",
+            "button": "Botón",
+            "switch": "Interruptor",
+            "ic": "Circuito integrado",
+            "connector": "Conector",
+            "header": "Header de pines",
+            "crystal": "Cristal oscilador",
+        }
+        return names.get(label, label)
 
     @staticmethod
     def _looks_like_breadboard(pixels: np.ndarray) -> bool:
@@ -142,3 +175,10 @@ class CircuitAnalyzer:
         minimum = pixels.min(axis=2).astype(np.int16)
         saturated = (maximum - minimum) > 70
         return float(saturated.mean()) > 0.04
+
+    @staticmethod
+    def _looks_like_led(pixels: np.ndarray) -> bool:
+        """Detecta una señal débil de LEDs por colores intensos."""
+        red = (pixels[:, :, 0] > 170) & (pixels[:, :, 1] < 130)
+        green = (pixels[:, :, 1] > 150) & (pixels[:, :, 0] < 150)
+        return float((red | green).mean()) > 0.003

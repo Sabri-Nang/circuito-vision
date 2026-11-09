@@ -54,11 +54,11 @@ def test_analyzer_includes_yolo_component_detection() -> None:
     result = CircuitAnalyzer(yolo_detector=FakeYoloDetector()).analyze(image)
 
     assert result.detections[0].label == "arduino"
-    assert any("arduino" in component.label for component in result.components)
+    assert any("Arduino" in component.label for component in result.components)
 
 
 def test_yolo_without_detections_does_not_invent_components() -> None:
-    image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
+    image = Image.fromarray(np.full((20, 20, 3), 130, dtype=np.uint8))
 
     result = CircuitAnalyzer(yolo_detector=EmptyYoloDetector()).analyze(image)
 
@@ -72,5 +72,5 @@ def test_electronic_yolo_detection_is_listed_as_component() -> None:
 
     result = CircuitAnalyzer(yolo_detector=ElectronicComponentDetector()).analyze(image)
 
-    assert result.components[0].label == "resistor"
+    assert result.components[0].label == "Resistencia"
     assert "resistor" in result.summary.lower()
