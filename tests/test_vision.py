@@ -23,6 +23,13 @@ class EmptyYoloDetector(FakeYoloDetector):
         return ()
 
 
+class ElectronicComponentDetector(FakeYoloDetector):
+    """Detector controlado que devuelve un componente electrónico."""
+
+    def detect(self, image: Image.Image) -> tuple[ObjectDetection, ...]:
+        return (ObjectDetection("resistor", 0.87, (1.0, 2.0, 10.0, 20.0)),)
+
+
 def test_analyzer_returns_warning_for_any_valid_image() -> None:
     image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
 
@@ -58,3 +65,12 @@ def test_yolo_without_detections_does_not_invent_components() -> None:
     assert result.detections == ()
     assert result.components == ()
     assert "no encontr" in result.summary.lower()
+
+
+def test_electronic_yolo_detection_is_listed_as_component() -> None:
+    image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
+
+    result = CircuitAnalyzer(yolo_detector=ElectronicComponentDetector()).analyze(image)
+
+    assert result.components[0].label == "resistor"
+    assert "resistor" in result.summary.lower()

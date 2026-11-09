@@ -82,9 +82,17 @@ uv run python scripts/validate_yolo_dataset.py
 uv run yolo detect train `
   model=yolo26n.pt `
   data=datasets/circuito/data.yaml `
-  epochs=50 `
-  imgsz=640
+  epochs=10 `
+  imgsz=320 `
+  batch=1 `
+  device=cpu `
+  workers=0
 ```
+
+En este equipo, el baseline entrenado queda en
+`runs/detect/.ultralytics/runs/circuito-componentes-lite/weights/best.pt`.
+Copiarlo a `models/circuito_components.pt` hace que la aplicación lo elija
+automáticamente al iniciar.
 
 La primera importación local contiene 117 imágenes de entrenamiento y 13 de
 validación provenientes del dataset PCB Component Detection. Las imágenes y

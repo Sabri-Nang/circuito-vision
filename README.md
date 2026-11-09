@@ -27,10 +27,10 @@ La aplicación utiliza ahora un **pipeline híbrido**:
 2. Las heurísticas de [vision.py](src/circuito_vision/vision.py) funcionan como
    respaldo y producen señales visuales básicas.
 
-El adaptador de YOLO está en [yolo_detector.py](src/circuito_vision/yolo_detector.py)
-y carga por defecto `yolo26n.pt`, un modelo oficial pequeño de Ultralytics. El
-archivo de pesos se descarga automáticamente durante la primera inferencia y
-no se sube al repositorio. La configuración de Ultralytics se guarda en la
+El adaptador de YOLO está en [yolo_detector.py](src/circuito_vision/yolo_detector.py).
+Si existe `models/circuito_components.pt`, la app lo usa automáticamente; de lo
+contrario carga `yolo26n.pt`. Los pesos no se suben al repositorio. La
+configuración de Ultralytics se guarda en la
 carpeta local `.ultralytics/` para evitar depender de permisos de
 `AppData\\Roaming` en Windows.
 
@@ -42,8 +42,9 @@ Las heurísticas deterministas basadas en NumPy y Pillow hacen lo siguiente:
   umbral, agrega una posible detección de microcontrolador.
 - **Cables:** calcula la proporción de píxeles saturados, es decir, con una
   diferencia alta entre el canal de color más claro y el más oscuro.
-- **Esquema:** [diagram.py](src/circuito_vision/diagram.py) dibuja cajas y una
-  conexión visual inferida a partir de esas detecciones.
+- **Esquema:** [diagram.py](src/circuito_vision/diagram.py) muestra la foto
+  original con cajas reales de detección. El MVP no inventa flechas ni
+  conexiones eléctricas que no pueda verificar.
 
 Las detecciones YOLO muestran la confianza producida por el modelo. Las
 confianzas de protoboard, controlador y cables generadas por las heurísticas son
@@ -57,22 +58,28 @@ uv run circuito-vision
 ```
 
 Las etiquetas `arduino`, `controller`, `microcontroller`, `breadboard`,
-`protoboard`, `wire`, `cable` y `jumper` se convierten en componentes del
-dominio. Las demás etiquetas se muestran como detecciones YOLO genéricas.
+`protoboard`, `wire`, `cable`, `jumper`, `resistor`, `capacitor`, `diode`,
+`led`, `ic`, `connector`, `button`, `switch`, `header` y `crystal` se
+convierten en componentes del dominio y aparecen en la lista de componentes
+detectados.
 
 El esqueleto del dataset y el validador están en
 [datasets/circuito](datasets/circuito/README.md). Allí se documentan las
 clases, el formato de bounding boxes y el comando de entrenamiento.
 
 La primera fuente PCB ya fue importada localmente con 117 imágenes de train y
-13 de validación. Por tamaño, las imágenes y etiquetas están excluidas de Git;
+13 de validación, y se entrenó un baseline de 10 épocas a 320 px en CPU. El
+baseline obtiene mAP50 aproximado de 0.035 sobre estas 13 imágenes: sirve para
+probar el pipeline, pero todavía no es suficientemente preciso para fotos de
+protoboards reales. Por tamaño, las imágenes, etiquetas y pesos están
+excluidas de Git;
 el proceso de descarga e importación queda documentado en
 [SOURCES.md](datasets/circuito/SOURCES.md).
 
 ### Tecnologías que todavía no están integradas
 
-- **YOLO:** sería apropiado para detectar Arduino, sensores, resistencias,
-  LEDs y otros componentes mediante un dataset etiquetado.
+- **YOLO:** ya está integrado para detectar componentes etiquetados; falta
+  ampliar el dataset con Arduino, protoboard, cables y sensores.
 - **MediaPipe:** podría ayudar a estimar geometría, puntos de referencia y
   trayectorias de cables.
 - **Teachable Machine:** podría servir para una primera clasificación sencilla

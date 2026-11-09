@@ -1,4 +1,4 @@
-path: .
+path: datasets/circuito
 train: images/train
 val: images/val
 

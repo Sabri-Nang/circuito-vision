@@ -100,6 +100,23 @@ class CircuitAnalyzer:
                 kind = ComponentKind.CONTROLLER
             elif any(word in label for word in ("wire", "cable", "jumper")):
                 kind = ComponentKind.WIRE
+            elif any(
+                word in label
+                for word in (
+                    "resistor",
+                    "capacitor",
+                    "diode",
+                    "led",
+                    "ic",
+                    "connector",
+                    "button",
+                    "switch",
+                    "header",
+                    "crystal",
+                    "debug",
+                )
+            ):
+                kind = ComponentKind.UNKNOWN
             else:
                 continue
             components.append(

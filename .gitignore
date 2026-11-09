@@ -13,7 +13,10 @@ dist/
 build/
 *.egg-info/
 *.pt
+*.cache
 .ultralytics/
+runs/
+models/*.pt
 datasets/sources/
 datasets/circuito/images/**/*.jpg
 datasets/circuito/images/**/*.jpeg

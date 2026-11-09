@@ -28,9 +28,13 @@ class YoloDetector:
     def __init__(
         self,
         model_path: str | None = None,
-        confidence: float = 0.25,
+        confidence: float = 0.10,
     ) -> None:
-        self.model_path = model_path or os.getenv("CIRCUITO_YOLO_MODEL", "yolo26n.pt")
+        default_model = Path("models/circuito_components.pt")
+        configured_model = os.getenv("CIRCUITO_YOLO_MODEL")
+        self.model_path = model_path or configured_model or (
+            str(default_model) if default_model.exists() else "yolo26n.pt"
+        )
         self.confidence = confidence
         self._model: Any | None = None
         self._error: str | None = None
