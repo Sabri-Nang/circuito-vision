@@ -8,11 +8,20 @@ reemplazarla luego por un adaptador de YOLO, MediaPipe o un modelo multimodal.
 import numpy as np
 from PIL import Image
 
-from .domain import CircuitAnalysis, ComponentKind, DetectedComponent
+from .domain import (
+    CircuitAnalysis,
+    ComponentKind,
+    DetectedComponent,
+    ObjectDetection,
+)
+from .yolo_detector import YoloDetector
 
 
 class CircuitAnalyzer:
     """Detecta señales visuales simples sin afirmar conexiones eléctricas."""
+
+    def __init__(self, yolo_detector: YoloDetector | None = None) -> None:
+        self.yolo_detector = yolo_detector
 
     def analyze(self, image: Image.Image) -> CircuitAnalysis:
         """Analiza una imagen RGB y devuelve componentes orientativos."""
@@ -23,6 +32,7 @@ class CircuitAnalyzer:
         pixels = np.asarray(rgb_image, dtype=np.uint8)
         components: list[DetectedComponent] = []
         notes: list[str] = []
+        detections: tuple[ObjectDetection, ...] = ()
 
         if self._looks_like_breadboard(pixels):
             components.append(
@@ -41,6 +51,19 @@ class CircuitAnalyzer:
                 DetectedComponent(ComponentKind.WIRE, "Cables de conexión", 0.64)
             )
 
+        if self.yolo_detector is not None:
+            detections = self.yolo_detector.detect(rgb_image)
+            self._add_component_detections(components, detections)
+            if self.yolo_detector.error:
+                notes.append(self.yolo_detector.error)
+            elif detections:
+                notes.append(
+                    "YOLO detectó objetos genéricos; se requieren pesos propios "
+                    "para reconocer componentes eléctricos con precisión."
+                )
+            else:
+                notes.append("YOLO no encontró objetos sobre el umbral de confianza.")
+
         if not components:
             notes.append(
                 "La foto no presenta señales claras para las heurísticas del MVP."
@@ -48,12 +71,35 @@ class CircuitAnalyzer:
         notes.append("La orientación y el encuadre influyen en la detección.")
         return CircuitAnalysis(
             components=tuple(components),
+            detections=detections,
             notes=tuple(notes),
             warning=(
                 "El esquema es orientativo: no reemplaza una revisión eléctrica "
                 "ni garantiza que las conexiones reales sean correctas."
             ),
         )
+
+    @staticmethod
+    def _add_component_detections(
+        components: list[DetectedComponent],
+        detections: tuple[ObjectDetection, ...],
+    ) -> None:
+        """Convierte etiquetas de un modelo propio en componentes de dominio."""
+        for detection in detections:
+            label = detection.label.lower()
+            if "breadboard" in label or "protoboard" in label:
+                kind = ComponentKind.BREADBOARD
+            elif any(
+                word in label for word in ("arduino", "controller", "microcontroller")
+            ):
+                kind = ComponentKind.CONTROLLER
+            elif any(word in label for word in ("wire", "cable", "jumper")):
+                kind = ComponentKind.WIRE
+            else:
+                continue
+            components.append(
+                DetectedComponent(kind, detection.label, detection.confidence)
+            )
 
     @staticmethod
     def _looks_like_breadboard(pixels: np.ndarray) -> bool:

@@ -23,10 +23,21 @@ class DetectedComponent:
 
 
 @dataclass(frozen=True, slots=True)
+class ObjectDetection:
+    """Detección cruda producida por un detector de objetos."""
+
+    label: str
+    confidence: float
+    box: tuple[float, float, float, float]
+    detector: str = "YOLO"
+
+
+@dataclass(frozen=True, slots=True)
 class CircuitAnalysis:
     """Resultado de una interpretación visual orientativa."""
 
     components: tuple[DetectedComponent, ...] = field(default_factory=tuple)
+    detections: tuple[ObjectDetection, ...] = field(default_factory=tuple)
     notes: tuple[str, ...] = field(default_factory=tuple)
     warning: str = ""
 
@@ -44,6 +55,12 @@ class CircuitAnalysis:
         if self.notes:
             lines.append("\nObservaciones:")
             lines.extend(f"- {note}" for note in self.notes)
+        if self.detections:
+            lines.append("\nDetecciones YOLO:")
+            lines.extend(
+                f"- {detection.label} ({detection.confidence:.0%})"
+                for detection in self.detections
+            )
         if self.warning:
             lines.append(f"\nAviso: {self.warning}")
         return "\n".join(lines)

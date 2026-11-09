@@ -21,9 +21,18 @@ de la fotografía sea correcto.
 
 ### Modelo usado actualmente
 
-La versión actual **no utiliza un modelo de inteligencia artificial entrenado**.
-El análisis de [vision.py](src/circuito_vision/vision.py) es una implementación
-determinista basada en NumPy y Pillow:
+La aplicación utiliza ahora un **pipeline híbrido**:
+
+1. YOLO ejecuta detección de objetos cuando está instalado el extra `yolo`.
+2. Las heurísticas de [vision.py](src/circuito_vision/vision.py) funcionan como
+   respaldo y producen señales visuales básicas.
+
+El adaptador de YOLO está en [yolo_detector.py](src/circuito_vision/yolo_detector.py)
+y carga por defecto `yolo26n.pt`, un modelo oficial pequeño de Ultralytics. El
+archivo de pesos se descarga automáticamente durante la primera inferencia y
+no se sube al repositorio.
+
+Las heurísticas deterministas basadas en NumPy y Pillow hacen lo siguiente:
 
 - **Protoboard:** calcula la proporción de píxeles claros. Si supera un umbral,
   agrega una detección orientativa de protoboard.
@@ -34,8 +43,20 @@ determinista basada en NumPy y Pillow:
 - **Esquema:** [diagram.py](src/circuito_vision/diagram.py) dibuja cajas y una
   conexión visual inferida a partir de esas detecciones.
 
-Por lo tanto, los porcentajes mostrados actualmente son **confianzas fijas de
-la heurística**, no probabilidades aprendidas por una red neuronal.
+Las detecciones YOLO muestran la confianza producida por el modelo. Las
+confianzas de protoboard, controlador y cables generadas por las heurísticas son
+valores fijos orientativos, no probabilidades aprendidas por una red neuronal.
+
+Para utilizar un modelo propio entrenado con componentes eléctricos:
+
+```powershell
+$env:CIRCUITO_YOLO_MODEL = "models/circuito_yolo.pt"
+uv run circuito-vision
+```
+
+Las etiquetas `arduino`, `controller`, `microcontroller`, `breadboard`,
+`protoboard`, `wire`, `cable` y `jumper` se convierten en componentes del
+dominio. Las demás etiquetas se muestran como detecciones YOLO genéricas.
 
 ### Tecnologías que todavía no están integradas
 
@@ -94,7 +115,7 @@ Desde la raíz del repositorio:
 
 ```powershell
 uv venv --python 3.12
-uv sync --extra dev
+uv sync --extra dev --extra yolo
 uv run circuito-vision
 ```
 
@@ -147,7 +168,8 @@ uv run ruff format --check .
 ### Fase 2: Refinamiento & Testing
 
 - [ ] Crear dataset etiquetado de fotos de protoboards.
-- [ ] Sustituir heurísticas por detección de componentes con YOLO.
+- [x] Integrar YOLO como detector opcional con fallback.
+- [ ] Sustituir el modelo genérico por pesos entrenados para componentes.
 - [ ] Usar MediaPipe u otro método geométrico para seguir cables.
 - [ ] Agregar pruebas con imágenes reales y casos de mala iluminación.
 - [ ] Medir precisión por componente y falsos positivos.

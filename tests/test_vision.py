@@ -3,7 +3,17 @@
 import numpy as np
 from PIL import Image
 
+from circuito_vision.domain import ObjectDetection
 from circuito_vision.vision import CircuitAnalyzer
+
+
+class FakeYoloDetector:
+    """Detector controlado para probar la integración sin descargar pesos."""
+
+    error = None
+
+    def detect(self, image: Image.Image) -> tuple[ObjectDetection, ...]:
+        return (ObjectDetection("arduino", 0.91, (1.0, 2.0, 10.0, 20.0)),)
 
 
 def test_analyzer_returns_warning_for_any_valid_image() -> None:
@@ -22,3 +32,12 @@ def test_analyzer_rejects_missing_image() -> None:
         assert "imagen" in str(error)
     else:
         raise AssertionError("Se esperaba un ValueError")
+
+
+def test_analyzer_includes_yolo_component_detection() -> None:
+    image = Image.fromarray(np.full((20, 20, 3), 220, dtype=np.uint8))
+
+    result = CircuitAnalyzer(yolo_detector=FakeYoloDetector()).analyze(image)
+
+    assert result.detections[0].label == "arduino"
+    assert any("arduino" in component.label for component in result.components)

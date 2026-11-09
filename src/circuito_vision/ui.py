@@ -5,11 +5,12 @@ from PIL import Image
 
 from .diagram import render_diagram
 from .vision import CircuitAnalyzer
+from .yolo_detector import YoloDetector
 
 
 def build_app() -> gr.Blocks:
     """Construye la interfaz Gradio sin iniciar el servidor."""
-    analyzer = CircuitAnalyzer()
+    analyzer = CircuitAnalyzer(yolo_detector=YoloDetector())
 
     def process_image(image: Image.Image | None) -> tuple[Image.Image | None, str]:
         if image is None:
@@ -46,7 +47,8 @@ def build_app() -> gr.Blocks:
             outputs=[output_diagram, output_text],
         )
         gr.Markdown(
-            "**Próximas mejoras:** detección de componentes con YOLO, geometría de "
+            "**Pipeline actual:** YOLO opcional + heurísticas de respaldo. "
+            "**Próximas mejoras:** pesos propios para componentes, geometría de "
             "cables con MediaPipe y exportación a formatos de circuitos."
         )
     return app
